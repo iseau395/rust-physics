@@ -7,7 +7,8 @@ const GRID_WIDTH: usize = (RADIUS * 2.5 / GRID_SIZE) as usize;
 const GRID_HEIGHT: usize = (RADIUS * 2.5 / GRID_SIZE) as usize;
 
 pub struct PhysicsEngine {
-    objects: [Vec<Object>; GRID_WIDTH * GRID_HEIGHT],
+    objects: Vec<Object>,
+    cells: [Vec<usize>; GRID_WIDTH * GRID_HEIGHT],
 
     constraint_center: Vec2,
     radius: f32,
@@ -17,10 +18,11 @@ pub struct PhysicsEngine {
 
 impl PhysicsEngine {
     pub fn new(center_x: f32, center_y: f32, radius: f32) -> PhysicsEngine {
-        const VAL: Vec<Object> = vec![];
+        const VAL: Vec<usize> = vec![];
 
         PhysicsEngine {
-            objects: [VAL; GRID_WIDTH * GRID_HEIGHT],
+            objects: vec![],
+            cells: [VAL; GRID_WIDTH * GRID_HEIGHT],
 
             constraint_center: Vec2::new(center_x, center_y),
             radius,
@@ -37,8 +39,8 @@ impl PhysicsEngine {
 
             self.update_objects(dt);
 
-            for cell_index in 0..self.objects.len() {
-                for obj_index in 0..self.objects[cell_index].len() {
+            for cell_index in 0..self.cells.len() {
+                for obj_index in 0..self.cells[cell_index].len() {
                     self.audit_object_cell(cell_index, obj_index);
                 }
             }
@@ -47,35 +49,27 @@ impl PhysicsEngine {
             self.calculate_collisions();
         }
 
-        let mut total_objects = 0;
-        for cell in self.objects.iter() {
-            total_objects += cell.len();
-        }
-        println!("{}", total_objects);
+        // let mut total_objects = 0;
+        // for cell in self.cells.iter() {
+        //     total_objects += cell.len();
+        // }
+        // println!("{}", total_objects);
     }
 
     fn update_objects(&mut self, dt: f32) {
-        for cell_index in 0..self.objects.len() {
-            for obj_index in 0..self.objects[cell_index].len() {
-                let cell = self.objects.get_mut(cell_index);
-                let cell = cell.unwrap();
+        for obj_id in 0..self.objects.len() {
+            let obj = &mut self.objects[obj_id];
 
-                let obj = cell.get_mut(obj_index);
-                let obj = obj.unwrap();
+            obj.accelerate(self.gravity);
 
-                obj.accelerate(self.gravity);
+            obj.update_position(dt);
 
-                obj.update_position(dt);
-
-                self.constrain_border(cell_index, obj_index)
-            }
+            self.constrain_border(obj_id);
         }
     }
 
-    fn constrain_border(&mut self, cell_index: usize, obj_index: usize) {
-        let cell = &mut self.objects[cell_index];
-
-        let obj = &mut cell[obj_index];
+    fn constrain_border(&mut self, obj_id: usize) {
+        let obj = &mut self.objects[obj_id];
 
         let relative_position = obj.position - self.constraint_center;
 
@@ -84,17 +78,15 @@ impl PhysicsEngine {
         if distance > self.radius - obj.radius {
             let normalized = relative_position.normalize();
             obj.position = self.constraint_center + normalized * (self.radius - obj.radius);
-
-            // self.audit_object_cell(cell_index, obj_index);
         }
     }
 
     fn calculate_collisions(&mut self) {
-        for cell_a_index in 0..self.objects.len() {
-            for cell_b_x in 0..3 {
+        for cell_a_index in 0..self.cells.len() {
+            for cell_b_x in 0..=2 {
                 let cell_b_x = cell_b_x - 1;
 
-                for cell_b_y in 0..3 {
+                for cell_b_y in 0..=2 {
                     let cell_b_y = cell_b_y - 1;
 
                     let cell_b_index = cell_a_index + cell_b_x + cell_b_y * GRID_WIDTH;
@@ -103,7 +95,7 @@ impl PhysicsEngine {
                     {
                         continue;
                     }
-                    if cell_b_index >= self.objects.len() {
+                    if cell_b_index >= self.cells.len() {
                         continue;
                     }
 
@@ -111,11 +103,11 @@ impl PhysicsEngine {
                     'obj_a_loop: loop {
                         let mut obj_b_index = 0;
                         'obj_b_loop: loop {
-                            if obj_a_index >= self.objects[cell_a_index].len() {
+                            if obj_a_index >= self.cells[cell_a_index].len() {
                                 break 'obj_a_loop;
                             }
 
-                            if obj_b_index >= self.objects[cell_b_index].len() {
+                            if obj_b_index >= self.cells[cell_b_index].len() {
                                 break 'obj_b_loop;
                             }
 
@@ -124,16 +116,17 @@ impl PhysicsEngine {
                                 continue 'obj_b_loop;
                             }
 
-                            let cell_a = self.objects.get(cell_a_index).unwrap();
-                            let cell_b = self.objects.get(cell_b_index).unwrap();
+                            let obj_a_id = self.cells[cell_a_index][obj_a_index];
+                            let obj_b_id = self.cells[cell_b_index][obj_b_index];
 
-                            let obj_a = &cell_a[obj_a_index];
-                            let obj_b = &cell_b[obj_b_index];
+                            let obj_a = &self.objects[obj_a_id];
+                            let obj_b = &self.objects[obj_b_id];
 
                             let collision_axis = obj_a.position - obj_b.position;
                             let distance = collision_axis.length();
 
                             let min_distance = obj_a.radius + obj_b.radius;
+
                             if distance < min_distance {
                                 let normalized = collision_axis.normalize();
                                 let delta = min_distance - distance;
@@ -141,20 +134,20 @@ impl PhysicsEngine {
                                 let a_size_ratio = obj_a.radius / (obj_a.radius + obj_b.radius);
                                 let b_size_ratio = obj_b.radius / (obj_a.radius + obj_b.radius);
 
-                                let obj_a = &mut self.objects[cell_a_index][obj_a_index];
+                                let obj_a = &mut self.objects[obj_a_id];
                                 obj_a.position += delta * normalized * a_size_ratio;
 
-                                let obj_b = &mut self.objects[cell_b_index][obj_b_index];
+                                let obj_b = &mut self.objects[obj_b_id];
                                 obj_b.position -= delta * normalized * b_size_ratio;
 
                                 if cell_a_index == cell_b_index {
-                                    let old_length = self.objects[cell_a_index].len();
+                                    let old_length = self.cells[cell_a_index].len();
 
                                     self.audit_object_cell(cell_a_index, obj_a_index);
                                     if obj_b_index == old_length - 1
-                                        && old_length != self.objects[cell_a_index].len()
+                                        && old_length != self.cells[cell_a_index].len()
                                     {
-                                        self.audit_object_cell(cell_b_index, obj_a_index);
+                                        self.audit_object_cell(cell_a_index, obj_a_index);
                                     } else {
                                         self.audit_object_cell(cell_b_index, obj_b_index);
                                     }
@@ -173,7 +166,7 @@ impl PhysicsEngine {
     }
 
     fn audit_object_cell(&mut self, cell_index: usize, obj_index: usize) {
-        let cell = &mut self.objects[cell_index];
+        let cell = &mut self.cells[cell_index];
 
         let cell_x = cell_index as f32 % GRID_WIDTH as f32 * GRID_SIZE
             + (self.constraint_center.x - GRID_WIDTH as f32 / 2. * GRID_SIZE);
@@ -184,7 +177,7 @@ impl PhysicsEngine {
         if obj.is_none() {
             return;
         }
-        let obj = obj.unwrap();
+        let obj = self.objects[*obj.unwrap()];
 
         let x = obj.position.x;
         let y = obj.position.y;
@@ -192,15 +185,17 @@ impl PhysicsEngine {
         if x < cell_x || y < cell_y || x > cell_x + GRID_SIZE || y > cell_y + GRID_SIZE {
             let obj = cell.swap_remove(obj_index);
 
-            self.spawn_object(obj);
+            self.assign_object_cell(obj);
         }
     }
 
-    pub fn spawn_object(&mut self, obj: Object) {
+    fn assign_object_cell(&mut self, obj: usize) {
+        let position = self.objects[obj].position;
+
         let mut relative_x =
-            obj.position.x - (self.constraint_center.x - GRID_WIDTH as f32 / 2. * GRID_SIZE);
+            position.x - (self.constraint_center.x - GRID_WIDTH as f32 / 2. * GRID_SIZE);
         let mut relative_y =
-            obj.position.y - (self.constraint_center.y - GRID_HEIGHT as f32 / 2. * GRID_SIZE);
+            position.y - (self.constraint_center.y - GRID_HEIGHT as f32 / 2. * GRID_SIZE);
 
         if relative_x < 0. {
             relative_x = 0. + 1.;
@@ -218,14 +213,18 @@ impl PhysicsEngine {
         let grid_x = (relative_x / GRID_SIZE).floor() as usize;
         let grid_y = (relative_y / GRID_SIZE).floor() as usize;
 
-        self.objects[grid_x + grid_y * GRID_WIDTH].push(obj);
+        self.cells[grid_x + grid_y * GRID_WIDTH].push(obj);
+    }
+
+    pub fn spawn_object(&mut self, obj: Object) {
+        self.objects.push(obj);
+
+        self.assign_object_cell(self.objects.len() - 1);
     }
 
     pub fn render(&self) {
-        for cell in self.objects.iter() {
-            for obj in cell.iter() {
-                obj.render();
-            }
+        for object in self.objects.iter() {
+            object.render();
         }
     }
 }
