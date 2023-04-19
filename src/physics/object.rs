@@ -1,4 +1,4 @@
-use macroquad::{math::Vec2, prelude::{WHITE, Color}, shapes::draw_circle};
+use macroquad::{math::Vec2, prelude::Color, shapes::draw_circle};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Object {

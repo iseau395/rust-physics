@@ -44,7 +44,7 @@ async fn main() {
         if is_mouse_button_pressed(MouseButton::Right) {
             let mouse_position = mouse_position();
 
-            engine.spawn_object(physics::Object::new(mouse_position.0, mouse_position.1, 8., WHITE, true));
+            engine.spawn_object(physics::Object::new(mouse_position.0, mouse_position.1, 8., RED, true));
         }
 
         
@@ -52,14 +52,20 @@ async fn main() {
             let mouse_position = mouse_position();
             let mouse_position = Vec2::new(mouse_position.0, mouse_position.1);
 
-            engine.spawn_object(physics::Object::new(mouse_position.x, mouse_position.y, 8., BLUE, true));
+            engine.spawn_object(physics::Object::new(mouse_position.x, mouse_position.y, 8., RED, true));
 
             for i in 1..20 {
                 let pos = mouse_position + i as f32 * Vec2::new(16., 0.);
 
-                engine.spawn_object(
-                    physics::Object::new(pos.x, pos.y, 8., BLUE, i==19)
-                );
+                if i == 19 {
+                    engine.spawn_object(
+                        physics::Object::new(pos.x, pos.y, 8., RED, true)
+                    );
+                } else {
+                    engine.spawn_object(
+                        physics::Object::new(pos.x, pos.y, 8., BLUE, false)
+                    );
+                }
 
                 engine.link_last_two(16.);
             }
