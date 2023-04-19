@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 mod physics;
 
 use macroquad::{prelude::*};
