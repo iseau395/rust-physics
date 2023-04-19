@@ -6,17 +6,21 @@ pub struct Object {
     last_position: Vec2,
     acceleration: Vec2,
 
+    pub pinned: bool,
+
     pub color: Color,
 
     pub radius: f32,
 }
 
 impl Object {
-    pub fn new(x: f32, y: f32, radius: f32) -> Object {
+    pub fn new(x: f32, y: f32, radius: f32, pinned: bool) -> Object {
         Object {
             position: Vec2::new(x, y),
             last_position: Vec2::new(x, y),
             acceleration: Vec2::new(0., 0.),
+
+            pinned,
 
             color: WHITE,
 
@@ -25,6 +29,10 @@ impl Object {
     }
 
     pub fn update_position(&mut self, dt: f32) {
+        if self.pinned {
+            return;
+        }
+
         let velocity = self.position - self.last_position;
         self.last_position = self.position;
 
@@ -34,6 +42,10 @@ impl Object {
     }
 
     pub fn accelerate(&mut self, accel: Vec2) {
+        if self.pinned {
+            return;
+        }
+
         self.acceleration += accel;
     }
 
