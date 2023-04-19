@@ -1,7 +1,7 @@
 use crate::{GRID_SIZE, RADIUS};
 
 use super::{Object};
-use macroquad::prelude::Vec2;
+use macroquad::{prelude::{Vec2, GREEN}, shapes::draw_line};
 
 const GRID_WIDTH: usize = (RADIUS * 2.5 / GRID_SIZE) as usize;
 const GRID_HEIGHT: usize = (RADIUS * 2.5 / GRID_SIZE) as usize;
@@ -55,11 +55,11 @@ impl PhysicsEngine {
             self.calculate_collisions();
         }
 
-        // let mut total_objects = 0;
-        // for cell in self.cells.iter() {
-        //     total_objects += cell.len();
-        // }
-        // println!("{}", total_objects);
+        let mut total_objects = 0;
+        for cell in self.cells.iter() {
+            total_objects += cell.len();
+        }
+        println!("{}", total_objects);
     }
 
     fn update_objects(&mut self, dt: f32) {
@@ -123,20 +123,22 @@ impl PhysicsEngine {
     fn calculate_collisions(&mut self) {
         for cell_a_index in 0..self.cells.len() {
             for cell_b_x in 0..=2 {
-                let cell_b_x = cell_b_x - 1;
+                let cell_b_x: f32 = cell_b_x as f32 - 1.;
 
                 for cell_b_y in 0..=2 {
-                    let cell_b_y = cell_b_y - 1;
+                    let cell_b_y: f32 = cell_b_y as f32 - 1.;
 
-                    let cell_b_index = cell_a_index + cell_b_x + cell_b_y * GRID_WIDTH;
+                    let cell_b_index = cell_a_index as f32 + cell_b_x + cell_b_y * GRID_WIDTH as f32;
 
-                    if cell_b_index % GRID_WIDTH == 0 || cell_b_index % GRID_WIDTH == GRID_WIDTH - 1
+                    if cell_b_index % GRID_WIDTH as f32 == 0. || cell_b_index % GRID_WIDTH as f32 == GRID_WIDTH as f32 - 1.
                     {
                         continue;
                     }
-                    if cell_b_index >= self.cells.len() {
+                    if cell_b_index >= self.cells.len() as f32 || cell_b_index < 0. {
                         continue;
                     }
+
+                    let cell_b_index: usize = cell_b_index as usize;
 
                     let mut obj_a_index = 0;
                     'obj_a_loop: loop {
@@ -282,6 +284,13 @@ impl PhysicsEngine {
     }
 
     pub fn render(&self) {
+        for link in self.links.iter() {
+            let obj_a = self.objects[link.0];
+            let obj_b = self.objects[link.1];
+
+            draw_line(obj_a.position.x, obj_a.position.y, obj_b.position.x, obj_b.position.y, 2., GREEN);
+        }
+
         for object in self.objects.iter() {
             object.render();
         }

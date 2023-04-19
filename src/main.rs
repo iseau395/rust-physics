@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 
 mod physics;
 
@@ -38,7 +38,7 @@ async fn main() {
                     let x_offset = (x as f32) * 16. - 20.;
                     let y_offset = (y as f32) * 16. - 20.;
 
-                    engine.spawn_object(physics::Object::new(mouse_position.0 + x_offset, mouse_position.1 + y_offset, 8., WHITE, false));
+                    engine.spawn_object(physics::Object::new(mouse_position.0 + x_offset, mouse_position.1 + y_offset, 4., WHITE, false));
                 }
             }
         }
@@ -57,7 +57,7 @@ async fn main() {
             engine.spawn_object(physics::Object::new(mouse_position.x, mouse_position.y, 8., RED, true));
 
             for i in 1..20 {
-                let pos = mouse_position + i as f32 * Vec2::new(16., 0.);
+                let pos = mouse_position + i as f32 * Vec2::new(32., 0.);
 
                 if i == 19 {
                     engine.spawn_object(
@@ -69,7 +69,7 @@ async fn main() {
                     );
                 }
 
-                engine.link_last_two(16.);
+                engine.link_last_two(32.);
             }
         }
 
