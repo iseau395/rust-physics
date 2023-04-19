@@ -1,14 +1,18 @@
 use crate::{GRID_SIZE, RADIUS};
 
-use super::Object;
+use super::{Object};
 use macroquad::prelude::Vec2;
 
 const GRID_WIDTH: usize = (RADIUS * 2.5 / GRID_SIZE) as usize;
 const GRID_HEIGHT: usize = (RADIUS * 2.5 / GRID_SIZE) as usize;
 
+pub struct Link(usize, usize, f32);
+
 pub struct PhysicsEngine {
     objects: Vec<Object>,
     cells: [Vec<usize>; GRID_WIDTH * GRID_HEIGHT],
+
+    links: Vec<Link>,
 
     constraint_center: Vec2,
     radius: f32,
@@ -23,6 +27,8 @@ impl PhysicsEngine {
         PhysicsEngine {
             objects: vec![],
             cells: [VAL; GRID_WIDTH * GRID_HEIGHT],
+
+            links: vec![],
 
             constraint_center: Vec2::new(center_x, center_y),
             radius,
@@ -65,6 +71,39 @@ impl PhysicsEngine {
             obj.update_position(dt);
 
             self.constrain_border(obj_id);
+        }
+
+        for link in self.links.iter() {
+            let obj_a = self.objects[link.0];
+            let obj_b = self.objects[link.1];
+
+            let axis = obj_a.position - obj_b.position;
+            let distance = axis.length();
+            
+            let normalized = axis.normalize();
+            let delta = link.2 - distance;
+
+            let a_size_ratio = if obj_a.pinned {
+                0.
+            } else if obj_b.pinned {
+                1.
+            } else {
+                0.5
+            };
+            let b_size_ratio = if obj_b.pinned {
+                0.
+            } else if obj_a.pinned {
+                1.
+            } else {
+                0.5
+            };
+
+            let obj_a = &mut self.objects[link.0];
+            obj_a.position += delta * normalized * a_size_ratio;
+
+            let obj_b = &mut self.objects[link.1];
+            obj_b.position -= delta * normalized * b_size_ratio;
+
         }
     }
 
@@ -131,8 +170,20 @@ impl PhysicsEngine {
                                 let normalized = collision_axis.normalize();
                                 let delta = min_distance - distance;
 
-                                let a_size_ratio = obj_a.radius / (obj_a.radius + obj_b.radius);
-                                let b_size_ratio = obj_b.radius / (obj_a.radius + obj_b.radius);
+                                let a_size_ratio = if obj_a.pinned {
+                                    0.
+                                } else if obj_b.pinned {
+                                    1.
+                                } else {
+                                    obj_a.radius / (obj_a.radius + obj_b.radius)
+                                };
+                                let b_size_ratio = if obj_b.pinned {
+                                    0.
+                                } else if obj_a.pinned {
+                                    1.
+                                } else {
+                                    obj_b.radius / (obj_a.radius + obj_b.radius)
+                                };
 
                                 let obj_a = &mut self.objects[obj_a_id];
                                 obj_a.position += delta * normalized * a_size_ratio;
@@ -220,6 +271,14 @@ impl PhysicsEngine {
         self.objects.push(obj);
 
         self.assign_object_cell(self.objects.len() - 1);
+    }
+
+    pub fn add_link(&mut self, obj_a_id: usize, obj_b_id: usize, length: f32) {
+        self.links.push(Link(obj_a_id, obj_b_id, length));
+    }
+
+    pub fn link_last_two(&mut self, length: f32) {
+        self.add_link(self.objects.len() - 2, self.objects.len() - 1, length);
     }
 
     pub fn render(&self) {

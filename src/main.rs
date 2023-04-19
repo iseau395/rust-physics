@@ -36,7 +36,7 @@ async fn main() {
                     let x_offset = (x as f32) * 16. - 20.;
                     let y_offset = (y as f32) * 16. - 20.;
 
-                    engine.spawn_object(physics::Object::new(mouse_position.0 + x_offset, mouse_position.1 + y_offset, 8., false));
+                    engine.spawn_object(physics::Object::new(mouse_position.0 + x_offset, mouse_position.1 + y_offset, 8., WHITE, false));
                 }
             }
         }
@@ -44,7 +44,25 @@ async fn main() {
         if is_mouse_button_pressed(MouseButton::Right) {
             let mouse_position = mouse_position();
 
-            engine.spawn_object(physics::Object::new(mouse_position.0, mouse_position.1, 8., true));
+            engine.spawn_object(physics::Object::new(mouse_position.0, mouse_position.1, 8., WHITE, true));
+        }
+
+        
+        if is_mouse_button_pressed(MouseButton::Middle) {
+            let mouse_position = mouse_position();
+            let mouse_position = Vec2::new(mouse_position.0, mouse_position.1);
+
+            engine.spawn_object(physics::Object::new(mouse_position.x, mouse_position.y, 8., BLUE, true));
+
+            for i in 1..20 {
+                let pos = mouse_position + i as f32 * Vec2::new(16., 0.);
+
+                engine.spawn_object(
+                    physics::Object::new(pos.x, pos.y, 8., BLUE, i==19)
+                );
+
+                engine.link_last_two(16.);
+            }
         }
 
         // if is_key_down(KeyCode::Space) || is_key_pressed(KeyCode::Right) {

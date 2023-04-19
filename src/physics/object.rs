@@ -14,7 +14,7 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn new(x: f32, y: f32, radius: f32, pinned: bool) -> Object {
+    pub fn new(x: f32, y: f32, radius: f32, color: Color, pinned: bool) -> Object {
         Object {
             position: Vec2::new(x, y),
             last_position: Vec2::new(x, y),
@@ -22,7 +22,7 @@ impl Object {
 
             pinned,
 
-            color: WHITE,
+            color: color,
 
             radius,
         }
