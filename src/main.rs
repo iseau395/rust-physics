@@ -8,7 +8,7 @@ use std::time::Instant;
 pub const WIDTH: f32 = 1200.;
 pub const HEIGHT: f32 = 800.;
 pub const RADIUS: f32 = 400.; 
-pub const GRID_SIZE: f32 = 25.;
+pub const GRID_SIZE: f32 = 20.;
 
 fn window_config() -> Conf {
     Conf {

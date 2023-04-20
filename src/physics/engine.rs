@@ -38,7 +38,7 @@ impl PhysicsEngine {
     }
 
     pub fn update(&mut self, dt: f32) {
-        let sub_steps = 8;
+        let sub_steps = 10;
 
         for _ in 0..sub_steps {
             let dt = dt / sub_steps as f32;
@@ -128,17 +128,16 @@ impl PhysicsEngine {
                 for cell_b_y in 0..=2 {
                     let cell_b_y: f32 = cell_b_y as f32 - 1.;
 
-                    let cell_b_index = cell_a_index as f32 + cell_b_x + cell_b_y * GRID_WIDTH as f32;
-
-                    if cell_b_index % GRID_WIDTH as f32 == 0. || cell_b_index % GRID_WIDTH as f32 == GRID_WIDTH as f32 - 1.
+                    if cell_a_index as f32 + cell_b_x < 0. || (cell_a_index as f32 + cell_b_y * GRID_WIDTH as f32) < 0.
                     {
                         continue;
                     }
-                    if cell_b_index >= self.cells.len() as f32 || cell_b_index < 0. {
+                    if cell_a_index as f32 % GRID_WIDTH as f32 + cell_b_x > GRID_WIDTH as f32 || ((cell_a_index as f32 / GRID_WIDTH as f32).floor() + cell_b_y * GRID_WIDTH as f32) > GRID_HEIGHT as f32
+                    {
                         continue;
                     }
 
-                    let cell_b_index: usize = cell_b_index as usize;
+                    let cell_b_index = (cell_a_index as f32 + cell_b_x + cell_b_y * GRID_WIDTH as f32) as usize;
 
                     let mut obj_a_index = 0;
                     'obj_a_loop: loop {
