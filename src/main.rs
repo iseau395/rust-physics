@@ -46,7 +46,7 @@ async fn main() {
         if is_mouse_button_pressed(MouseButton::Right) {
             let mouse_position = mouse_position();
 
-            engine.spawn_object(physics::Object::new(mouse_position.0, mouse_position.1, 8., RED, true));
+            engine.spawn_object(physics::Object::new(mouse_position.0, mouse_position.1, 4., RED, true));
         }
 
         
