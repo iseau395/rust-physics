@@ -54,22 +54,24 @@ async fn main() {
             let mouse_position = mouse_position();
             let mouse_position = Vec2::new(mouse_position.0, mouse_position.1);
 
-            engine.spawn_object(physics::Object::new(mouse_position.x, mouse_position.y, 8., RED, true));
+            engine.spawn_object(physics::Object::new(mouse_position.x, mouse_position.y, 4., RED, true));
 
-            for i in 1..20 {
-                let pos = mouse_position + i as f32 * Vec2::new(32., 0.);
+            let length = 40;
 
-                if i == 19 {
+            for i in 1..length {
+                let pos = mouse_position + i as f32 * Vec2::new(8., 0.);
+
+                if i == length - 1 {
                     engine.spawn_object(
-                        physics::Object::new(pos.x, pos.y, 8., RED, true)
+                        physics::Object::new(pos.x, pos.y, 4., RED, true)
                     );
                 } else {
                     engine.spawn_object(
-                        physics::Object::new(pos.x, pos.y, 8., BLUE, false)
+                        physics::Object::new(pos.x, pos.y, 4., BLUE, false)
                     );
                 }
 
-                engine.link_last_two(32.);
+                engine.link_last_two(8.);
             }
         }
 
